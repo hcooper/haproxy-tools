@@ -4,18 +4,38 @@
 # Hereward Cooper - Apr 2011
 
 import subprocess
+import re
+import datetime
 from subprocess import Popen, PIPE, STDOUT
 
+# Get current time
+time = datetime.datetime.now()
+
+# Define which interface our VIPs are going to live on
+VIPINT = "eth1"
+
+# Read from /etc/sysconfig/haproxy and determine if we're master or slave
+for line in open("/etc/sysconfig/haproxy"):
+	if line.startswith("HAPROXYSLAVE="):
+		ROLE="master"
+		PRIORITY="101"
+		break
+	else:
+		ROLE="slave"
+		PRIORITY="100"
+
+# Run the script to extract IPs from HAProxy
 getips = subprocess.Popen(["/usr/local/bin/haproxy_check_ips.sh"], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
 VIPS = getips.stdout.read()
-
-VIPINT = "eth1"
-PRIORITY = "101"
 
 OUTPUT = """
 ## /etc/keepalived/keepalived.conf
 ## THIS CONFIGURATION IS AUTOMATICALLY GENERATED.
 ## MANUAL CHANGES WILL BE OVERWRITTEN.
+##
+## Configuration at """ + str(time.ctime()) + """
+## ROLE = """ + ROLE + """
+## VIPINT = """ + VIPINT + """
 
 vrrp_script chk_haproxy {               # Requires keepalived-1.1.13
         script "killall -0 haproxy"     # cheaper than pidof
@@ -37,4 +57,3 @@ vrrp_instance VI_1 {
 }
 """
 print OUTPUT
-
