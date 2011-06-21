@@ -6,26 +6,38 @@
 import subprocess
 import re
 import datetime
+import imp
+import sys
 from subprocess import Popen, PIPE, STDOUT
 
 # Get current time
 time = datetime.datetime.now()
 
-# Define which interface our VIPs are going to live on
-VIPINT = "eth1"
+## Import the sysconfig configuration file
+config = imp.load_source('haproxy', '/etc/sysconfig/haproxy')
 
-# Read from /etc/sysconfig/haproxy and determine if we're master or slave
-for line in open("/etc/sysconfig/haproxy"):
-	if line.startswith("HAPROXYSLAVE="):
-		ROLE="master"
-		PRIORITY="101"
-		break
-	else:
-		ROLE="slave"
-		PRIORITY="100"
+## Check the haproxy slave config
+try:
+	config.HAPROXYSLAVE
+except:
+	ROLE="slave"
+	PRIORITY="100"
+else:
+	ROLE="master"
+	PRIORITY="101"
+
+## Check the interface where the VIPs live is defined
+try:
+	config.VIPINT
+except:
+	print "ERROR: No interface defined in /etc/sysconfig/haproxy"
+	sys.exit(1)
+else:
+	VIPINT = config.VIPINT
+
 
 # Run the script to extract IPs from HAProxy
-getips = subprocess.Popen(["/usr/local/bin/haproxy_check_ips.sh"], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+getips = subprocess.Popen(["/usr/bin/haproxy_extract_ips"], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
 VIPS = getips.stdout.read()
 
 OUTPUT = """
