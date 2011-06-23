@@ -7,21 +7,28 @@ import os
 import re
 import sys
 
+# This is the command to run to retrieve the raw stats from the socket
 command="echo 'show stat' | nc -U /tmp/haproxy | egrep -v '(^#|^haproxystats)'"
 
+# These are the names haproxy calls each of the columns it output. We can improve the names
+# by just changing them here. But most of them are fine
 titles="pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,\
         wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,\
         pid,iid,sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,check_status,\
         check_code,check_duration,hrsp_1xx,hrsp_2xx,hrsp_3xx,hrsp_4xx,hrsp_5xx,\
         hrsp_other,hanafail,req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,misc"
 
+# Put the column titles into an array
 title_array=titles.split(',')
 
+
+#---------------------
+# There are our checks
+#---------------------
 checks = [
-#    ['bout', '512000', '1024000'],
     ['rate', '100', '500'],
-    ['downtime', '5', '25'],
-    ['status', '', '']
+    ['chkfail', '5', '25'],
+    ['status', '', '']      # status stays at the end, just for formatting purposes
 ]
 
 
@@ -70,11 +77,12 @@ def run_checks():
                     alert_crit = 1
     
             # Generic check for the other fields which are numeric
+            # Make sure int() is used when needed!
             else:
-                if server[check] > warn and server[check] < crit:
+                if int(server[check]) >= int(warn) and int(server[check]) < int(crit):
                     output += check + " WARN " + server[check] + " | "
                     alert_warn = 1
-                if server[check] > crit:
+                if int(server[check]) >= int(crit):
                     output += check + " CRIT " + server[check] + " | "
                     alert_crit = 1
                 #if server[check] < warn:          # Disabled so OK doesn't give out stats 
