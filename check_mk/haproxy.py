@@ -18,14 +18,18 @@ titles="pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,eco
 title_array=titles.split(',')
 
 checks = [
-    ['bout', '512000', '1024000'],
+#    ['bout', '512000', '1024000'],
     ['rate', '100', '500'],
-    ['status', '', ''],
-    ['downtime', '5', '25']
+    ['downtime', '5', '25'],
+    ['status', '', '']
 ]
 
 
 # Convert the raw stats into nested arrays. Much nicer to use.
+# This functions creates an array, with each element being a dictonary of checks for each server
+# e.g.
+#  servers = [ {pxname: app1, rate: 15...}, {pxname: app2, rate: 7...} ]
+
 def build_array():
     data = os.popen(command).read()     # Retrieve the raw data
     servers=[]
@@ -60,20 +64,20 @@ def run_checks():
             # Special check for the "status" field as it's not a numeric value
             if check == "status":
                 if server['status'] == "UP":
-                    output += "| status UP "
+                    output += "status UP"
                 if server['status'] == "DOWN":
-                    output += "| status DOWN "
+                    output += "status DOWN"
                     alert_crit = 1
     
             # Generic check for the other fields which are numeric
             else:
                 if server[check] > warn and server[check] < crit:
-                    output += "| " + check + " WARN " + server[check]
+                    output += check + " WARN " + server[check] + " | "
                     alert_warn = 1
                 if server[check] > crit:
-                    output += "| " + check + " CRIT " + server[check]
+                    output += check + " CRIT " + server[check] + " | "
                     alert_crit = 1
-                #if server[check] < warn:
+                #if server[check] < warn:          # Disabled so OK doesn't give out stats 
                     #output += "| " + check + " OK " + server[check]
 
             # Append the outcome of check check to the results line for the server
