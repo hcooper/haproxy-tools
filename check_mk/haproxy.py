@@ -5,6 +5,7 @@
 
 import os
 import re
+import sys
 
 command="echo 'show stat' | nc -U /tmp/haproxy | egrep -v '(^#|^haproxystats)'"
 
@@ -18,7 +19,9 @@ title_array=titles.split(',')
 
 checks = [
     ['bout', '512000', '1024000'],
-    ['status', '', '']
+    ['rate', '100', '500'],
+    ['status', '', ''],
+    ['downtime', '5', '25']
 ]
 
 
@@ -40,26 +43,49 @@ def build_array():
 
 
 def run_checks():
-    for check,warn,crit in checks:
-        for server in servers:
-    
+    for server in servers:
+
+        if server['svname'] == "BACKEND" or server['svname'] == "FRONTEND":             # Skip FRONTEND and BACKEND lines
+            continue
+
+        # Define some variables
+        result=""           # The complete set of results for each server's checks
+        alert_warn=""       # Flag set if  check makes a server WARN
+        alert_crit=""       #   "   "   "   "   "   "   "   "   CRIT
+        alert_ok=""         #   "   "   "   "   "   "   "   "   OK
+
+        for check,warn,crit in checks:
+            output=""
+
             # Special check for the "status" field as it's not a numeric value
             if check == "status":
                 if server['status'] == "UP":
-                    print "OK"
+                    output += "| status UP "
                 if server['status'] == "DOWN":
-                    print "DOWN"
+                    output += "| status DOWN "
+                    alert_crit = 1
     
             # Generic check for the other fields which are numeric
             else:
-                if server['svname'] == "BACKEND" or server['svname'] == "FRONTEND":             # Skip FRONTEND and BACKEND lines
-                 continue
                 if server[check] > warn and server[check] < crit:
-                 print "1 HAProxy_" + server['svname'] + "_" + check + " - " + "WARNING - " + server['svname'] + " " + check + ": " + server[check]
+                    output += "| " + check + " WARN " + server[check]
+                    alert_warn = 1
                 if server[check] > crit:
-                 print "2 HAProxy_" + server['svname'] + "_" + check + " - " + "CRITICAL - " + server['svname'] + " " + check + ": " + server[check]
+                    output += "| " + check + " CRIT " + server[check]
+                    alert_crit = 1
                 if server[check] < warn:
-                 print "0 HAProxy_" + server['svname'] + "_" + check + " - " + "OK - " + server['svname'] + " " + check + ": " + server[check]
+                    output += "| " + check + " OK " + server[check]
+
+            # Append the outcome of check check to the results line for the server
+            result += output
+
+        # Determine if we need to flag the server as OK, WARN or CRIT
+        if alert_warn==1:
+            print "1 " + server['svname'] + " " + result
+        if alert_crit==1:
+            print "2 " + server['svname'] + " " + result
+        if alert_crit != 1 and alert_warn != 1:
+            print "0 " + server['svname'] + " " + result
 
 servers = build_array()
 run_checks()
