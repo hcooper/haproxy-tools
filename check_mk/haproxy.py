@@ -73,19 +73,19 @@ def run_checks():
                 if server[check] > crit:
                     output += "| " + check + " CRIT " + server[check]
                     alert_crit = 1
-                if server[check] < warn:
-                    output += "| " + check + " OK " + server[check]
+                #if server[check] < warn:
+                    #output += "| " + check + " OK " + server[check]
 
             # Append the outcome of check check to the results line for the server
             result += output
 
         # Determine if we need to flag the server as OK, WARN or CRIT
         if alert_warn==1:
-            print "1 " + server['svname'] + " " + result
+            print "1 " + "HAProxy_" + server['svname'] + " - WARNING - " + result
         if alert_crit==1:
-            print "2 " + server['svname'] + " " + result
+            print "2 " + "HAProxy_" + server['svname'] + " - CRITICAL - " + result
         if alert_crit != 1 and alert_warn != 1:
-            print "0 " + server['svname'] + " " + result
+            print "0 " + "HAProxy_" + server['svname'] + " - OK " + result
 
 servers = build_array()
 run_checks()
