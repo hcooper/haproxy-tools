@@ -3,6 +3,9 @@
 # A check_mk plugin to monitor the status of an HAProxy server.
 # Hereward Cooper <coops@fawk.eu>
 
+# Precaution: check_mk presumes each check is a unique name. However HAProxy allows
+# servers to be called the same. If this happens, checks will overwrite each other.
+
 import os
 import re
 import sys
@@ -23,7 +26,7 @@ title_array=titles.split(',')
 
 
 #---------------------
-# There are our checks
+# These are our checks
 #---------------------
 checks = [
     ['rate', '100', '500'],
