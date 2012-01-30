@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-# This script scans the haproxy configuration and generates the keepalived config to match
-# Hereward Cooper - Apr 2011
+# This script scans the haproxy configuration and generates the keepalived config to match.
+# Used in HA deployments.
+
+# Required: haproxy_extract_ips (to actually get the list of IPs).
+
+# First developed: Hereward Cooper - Apr 2011
 
 import subprocess
 import re

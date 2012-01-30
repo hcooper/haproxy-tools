@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Script to check that the IPs HAProxy is listening on are also listed in the keepalived config
+# Extract a list of IPs haproxy is listening on. Used by generate_keepalived in HA setups.
+
+# First developed: Hereward Cooper - Apr 2011
 
 HACONFIGFILE="/etc/haproxy/haproxy.cfg"
 TEMPFILE=`mktemp`
