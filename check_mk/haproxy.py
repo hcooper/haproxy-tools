@@ -45,21 +45,21 @@ def build_array():
 def run_checks():
 
     """
-    Interate through each server, and then each defined check, and compare the values
-    the the critical/warning levels, then alert if need be.
+    Interate through each server, and then each defined check, and compare the values to
+    the critical/warning levels, then alert if need be.
     """
 
     for server in servers:
 
-        if server['svname'] == "BACKEND" or server['svname'] == "FRONTEND":             # Skip FRONTEND and BACKEND lines
+        # Skip FRONTEND and BACKEND lines
+        if server['svname'] == "BACKEND" or server['svname'] == "FRONTEND":
             continue
 
         # Define some variables before use
         result=""           # The complete set of results for each server's checks
-        alert_warn=""       # Flag set if  check makes a server WARN
-        alert_crit=""       #   "   "   "   "   "   "   "   "   CRIT
-        alert_ok=""         #   "   "   "   "   "   "   "   "   OK
         allperf=""          # The complete set of all performance data for a server
+        alert_warn=False    # Flag set if  check makes a server WARN
+        alert_crit=False    #   "   "   "   "   "   "   "   "   CRIT
 
         for check,warn,crit in checks:
             output=""
@@ -71,33 +71,33 @@ def run_checks():
                     output += "status UP"
                 if server['status'] == "DOWN":
                     output += "status DOWN"
-                    alert_crit = 1
+                    alert_crit = True
     
             # Generic check for the other fields which are numeric
             # Make sure int() is used when needed!
             else:
                 if int(server[check]) >= int(warn) and int(server[check]) < int(crit):
                     output += check + " WARN " + server[check] + " | "
-                    alert_warn = 1
+                    alert_warn = True
                 if int(server[check]) >= int(crit):
                     output += check + " CRIT " + server[check] + " | "
-                    alert_crit = 1
+                    alert_crit = True
                 #if server[check] < warn:          # Disabled so OK doesn't give out stats 
                     #output += "| " + check + " OK " + server[check]
 
                 perfdata += check + "=" + server[check] + ";" + warn + ";" + crit + "|"
 
-            # Append the outcome of the check to the results line for the server
+            # Append the check results and performance data to the output line
             result += output
             allperf += perfdata
 
         # If any of our checks have set the crit/warn flags, act on it
-        if alert_crit==1:
-            print "2 HAProxy_%s %s CRITICAL - %s" % (server['svname'], allperf, result)
-        elif alert_warn==1:
-            print "1 HAProxy_%s %s WARNING - %s" % (server['svname'], allperf, result)
-        elif alert_crit != 1 and alert_warn != 1:
-            print "0 HAProxy_%s %s OK - %s" % (server['svname'], allperf, result)
+        if alert_crit:
+            print "2 HAProxy_%s %s CRITICAL - [%s]" % (server['svname'], allperf, result)
+        elif alert_warn:
+            print "1 HAProxy_%s %s WARNING - [%s]" % (server['svname'], allperf, result)
+        else:
+            print "0 HAProxy_%s %s OK - [%s]" % (server['svname'], allperf, result)
 
 if __name__ == "__main__":
 
