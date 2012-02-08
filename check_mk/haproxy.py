@@ -102,8 +102,7 @@ def run_checks():
 if __name__ == "__main__":
 
     # This is the command to run to retrieve the raw stats from the socket
-    #command="echo 'show stat' | nc -U /tmp/haproxy | egrep -v '(^#|^haproxystats)'"
-    command="cat /tmp/hap.tmp"
+    command="echo 'show stat' | nc -U /tmp/haproxy | egrep -v '(^#|^haproxystats)'"
 
     # These are the names haproxy calls each of the columns it output. We can improve the names
     # by just changing them here. But most of them are fine
