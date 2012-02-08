@@ -5,13 +5,11 @@
 # First developed: Hereward Cooper - Apr 2011
 
 HACONFIGFILE="/etc/haproxy/haproxy.cfg"
-TEMPFILE=`mktemp`
 
-# Find all the 'listen' and 'frontend' lines from the haproxy configuration, and extract the IP address
-egrep '(listen|frontend)' $HACONFIGFILE | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' | grep -v 127.0.0.1 > $TEMPFILE
-
-# Remove duplicates
-sort $TEMPFILE | uniq
-
-# Tidy up
-rm -f $TEMPFILE
+# Find all the 'listen' and 'frontend' lines from the haproxy configuration,
+# and extract the IP address.
+egrep '(listen|frontend)' $HACONFIGFILE \
+	| grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' \
+	| grep -v 127.0.0.1 \
+	| sort \
+	| uniq
