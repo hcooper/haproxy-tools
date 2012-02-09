@@ -1,9 +1,7 @@
 #!/usr/bin/python
 
 # This script scans the haproxy configuration and generates the keepalived config to match.
-# Used in HA deployments.
-
-# Required: haproxy_extract_ips (to actually get the list of IPs).
+# Used in HA deployments where we need fail-over capability.
 
 # First developed: Hereward Cooper - Apr 2011
 
@@ -14,62 +12,94 @@ import imp
 import sys
 from subprocess import Popen, PIPE, STDOUT
 
-# Get current time
-time = datetime.datetime.now()
-
-## Import the sysconfig configuration file
-config = imp.load_source('haproxy', '/etc/sysconfig/haproxy')
-
-## Check the haproxy slave config
-try:
-	config.HAPROXYSLAVE
-except:
-	ROLE="slave"
-	PRIORITY="100"
-else:
-	ROLE="master"
-	PRIORITY="101"
-
-## Check the interface where the VIPs live is defined
-try:
-	config.VIPINT
-except:
-	print "ERROR: No interface defined in /etc/sysconfig/haproxy"
-	sys.exit(1)
-else:
-	VIPINT = config.VIPINT
+__author__ = "Hereward Cooper <coops@fawk.eu>"
+__version__ = "v0.1"
+__website__ "http://github.com/hcooper/haproxy-tools/"
 
 
-# Run the script to extract IPs from HAProxy
-getips = subprocess.Popen(["/usr/bin/haproxy_extract_ips"], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-VIPS = getips.stdout.read()
+def get_ips(configfile):
 
-OUTPUT = """
-## /etc/keepalived/keepalived.conf
-## THIS CONFIGURATION IS AUTOMATICALLY GENERATED.
-## MANUAL CHANGES WILL BE OVERWRITTEN.
-##
-## Configuration at """ + str(time.ctime()) + """
-## ROLE = """ + ROLE + """
-## VIPINT = """ + VIPINT + """
+    """
+    Extract the IPs which HAProxy will listen on (i.e. VIPs) from the config file
+    """
 
-vrrp_script chk_haproxy {               # Requires keepalived-1.1.13
-        script "killall -0 haproxy"     # cheaper than pidof
-        interval 2                      # check every 2 seconds
-        weight 2                        # add 2 points of prio if OK
-}
+    # This could be ported to pure python, however I can't figure the regex out.
+    getips = subprocess.Popen(["egrep '(listen|frontend)' " + configfile + "\
+            | grep -o '[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}' \
+            | grep -v 127.0.0.1 \
+            | sort \
+            | uniq"], shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
 
-vrrp_instance VI_1 {
-        interface """ + VIPINT + """
-        state MASTER
-        virtual_router_id 51
-        priority """ + PRIORITY + """			# 101=master, 100=standby
-        virtual_ipaddress {
-		""" + VIPS + """
-        }
-        track_script {
-            chk_haproxy
-        }
-}
-"""
-print OUTPUT
+    # Return the list of VIPs
+    return getips.stdout.read()
+
+
+def main(vips):
+
+    """
+    Generate the keepalived config using the list of VIPs we're provided
+    """
+
+    # Get current time
+    time = datetime.datetime.now()
+    
+    ## Import the sysconfig configuration file
+    config = imp.load_source('haproxy', '/etc/sysconfig/haproxy')
+    
+    ## Check the haproxy slave config
+    try:
+    	config.HAPROXYSLAVE
+    except:
+    	ROLE="slave"
+    	PRIORITY="100"
+    else:
+    	ROLE="master"
+    	PRIORITY="101"
+    
+    ## Check the interface where the VIPs live is defined
+    try:
+    	config.VIPINT
+    except:
+    	print "ERROR: No interface defined in /etc/sysconfig/haproxy"
+    	sys.exit(1)
+    else:
+    	VIPINT = config.VIPINT
+    
+    OUTPUT = """
+    ## /etc/keepalived/keepalived.conf
+    ## THIS CONFIGURATION IS AUTOMATICALLY GENERATED.
+    ## MANUAL CHANGES WILL BE OVERWRITTEN.
+    ##
+    ## Configuration at """ + str(time.ctime()) + """
+    ## ROLE = """ + ROLE + """
+    ## VIPINT = """ + VIPINT + """
+    
+    vrrp_script chk_haproxy {               # Requires keepalived-1.1.13
+            script "killall -0 haproxy"     # cheaper than pidof
+            interval 2                      # check every 2 seconds
+            weight 2                        # add 2 points of prio if OK
+    }
+    
+    vrrp_instance VI_1 {
+            interface """ + VIPINT + """
+            state MASTER
+            virtual_router_id 51
+            priority """ + PRIORITY + """			# 101=master, 100=standby
+            virtual_ipaddress {
+    		""" + vips + """
+            }
+            track_script {
+                chk_haproxy
+            }
+    }
+    """
+    return OUTPUT
+    
+    
+if __name__ == "__main__":
+
+    haproxy_config="/tmp/ha"
+
+    # Fire up the engines
+    vips = get_ips(haproxy_config)
+    print main(vips)
