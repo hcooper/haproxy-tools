@@ -3,6 +3,11 @@
 # A check_mk plugin to monitor the status of an HAProxy server.
 # Hereward Cooper <coops@fawk.eu>
 
+# Requirements:
+# - Netcat (nc command)
+# - HAproxy socket
+#   (config: "stats socket /var/run/haproxy.socket")
+
 # Precaution: check_mk presumes each check is a unique name. However HAProxy allows
 # servers to be called the same. If this happens, checks will overwrite each other.
 
@@ -101,8 +106,10 @@ def run_checks():
 
 if __name__ == "__main__":
 
+    # Location of the HAProxy socket
+    socket="/var/run/haproxy.socket"
     # This is the command to run to retrieve the raw stats from the socket
-    command="echo 'show stat' | nc -U /tmp/haproxy | egrep -v '(^#|^haproxystats)'"
+    command="echo 'show stat' | nc -U %s | egrep -v '(^#|^haproxystats)'"%(socket)
 
     # These are the names haproxy calls each of the columns it output. We can improve the names
     # by just changing them here. But most of them are fine
