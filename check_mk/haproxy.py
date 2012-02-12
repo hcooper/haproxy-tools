@@ -92,11 +92,13 @@ def run_checks():
 
                 perfdata += check + "=" + server[check] + ";" + warn + ";" + crit
 
-            # Append the check results and performance data to the output line
+            # Build the output performance data, putting | in the right places
             if allperf == "":
                 allperf = perfdata
-            else:
+            elif perfdata != "":
                 allperf += "|" + perfdata
+
+            # Build the check output
             result += output
 
         # If any of our checks have set the crit/warn flags, act on it
