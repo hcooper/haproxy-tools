@@ -90,7 +90,7 @@ def run_checks():
                 #if server[check] < warn:          # Disabled so OK doesn't give out stats 
                     #output += "| " + check + " OK " + server[check]
 
-                perfdata += check + "=" + server[check] + ";" + warn + ";" + crit + "|"
+                perfdata += check + "=" + server[check] + ";" + warn + ";" + crit
 
             # Append the check results and performance data to the output line
             if allperf == []:
