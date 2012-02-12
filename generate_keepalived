@@ -14,7 +14,7 @@ from subprocess import Popen, PIPE, STDOUT
 
 __author__ = "Hereward Cooper <coops@fawk.eu>"
 __version__ = "v0.1"
-__website__ "http://github.com/hcooper/haproxy-tools/"
+__website__ = "http://github.com/hcooper/haproxy-tools/"
 
 
 def get_ips(configfile):
