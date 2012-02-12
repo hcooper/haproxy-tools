@@ -93,7 +93,7 @@ def run_checks():
                 perfdata += check + "=" + server[check] + ";" + warn + ";" + crit
 
             # Append the check results and performance data to the output line
-            if allperf == []:
+            if allperf == "":
                 allperf = perfdata
             else:
                 allperf += "|" + perfdata
