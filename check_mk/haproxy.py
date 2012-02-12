@@ -93,7 +93,10 @@ def run_checks():
                 perfdata += check + "=" + server[check] + ";" + warn + ";" + crit + "|"
 
             # Append the check results and performance data to the output line
-            result += output
+            if result == []:
+                result = output
+            else:
+                result += "|" + output
             allperf += perfdata
 
         # If any of our checks have set the crit/warn flags, act on it
@@ -108,6 +111,7 @@ if __name__ == "__main__":
 
     # Location of the HAProxy socket
     socket="/var/run/haproxy.socket"
+
     # This is the command to run to retrieve the raw stats from the socket
     command="echo 'show stat' | nc -U %s | egrep -v '(^#|^haproxystats)'"%(socket)
 
