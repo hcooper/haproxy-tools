@@ -82,10 +82,10 @@ def run_checks():
             # Make sure int() is used when needed!
             else:
                 if int(server[check]) >= int(warn) and int(server[check]) < int(crit):
-                    output += check + " WARN " + server[check] + " | "
+                    output += check + " WARN " + server[check] + ", "
                     alert_warn = True
                 if int(server[check]) >= int(crit):
-                    output += check + " CRIT " + server[check] + " | "
+                    output += check + " CRIT " + server[check] + ", "
                     alert_crit = True
                 #if server[check] < warn:          # Disabled so OK doesn't give out stats 
                     #output += "| " + check + " OK " + server[check]
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # This is the command to run to retrieve the raw stats from the socket
     command="echo 'show stat' | nc -U %s | egrep -v '(^#|^haproxystats)'"%(socket)
 
-    # These are the names haproxy calls each of the columns it output. We can improve the names
+    # These are the names haproxy calls each of the columns it outputs. We can improve the names
     # by just changing them here. But most of them are fine
     titles="pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,\
         wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,\
@@ -128,12 +128,7 @@ if __name__ == "__main__":
     # Put the column titles into an array
     title_array=titles.split(',')
 
-    # These are our checks (the field, the warning level and the critical level)
-    checks = [
-        ['rate', '250', '500'],
-        ['chkfail', '5', '25'],
-        ['status', '', ''] # status stays at the end, just for formatting purposes
-    ]
+    from checks import checks
 
     build_array()
     run_checks()
