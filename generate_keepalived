@@ -98,7 +98,7 @@ def main(vips):
     
 if __name__ == "__main__":
 
-    haproxy_config="/tmp/ha"
+    haproxy_config="/etc/haproxy/haproxy.cfg"
 
     # Fire up the engines
     vips = get_ips(haproxy_config)
